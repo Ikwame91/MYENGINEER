@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+.progress.json
+labs/01-slow-dashboard/data.db
+labs/01-slow-dashboard/data.db.tmp
