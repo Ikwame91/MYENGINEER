@@ -14,7 +14,7 @@ processes, real HTTP servers on localhost, real TCP timeouts. It runs on any lap
 
 ```bash
 python3 lab.py            # list labs and your progress
-python3 lab.py run 01     # see the incident
+python3 lab.py guide 01   # new here? a step-by-step walkthrough of the first lab
 ```
 
 ## The loop (this is the whole method)

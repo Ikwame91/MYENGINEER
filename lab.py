@@ -4,6 +4,8 @@
     python3 lab.py                    list labs and your progress
     python3 lab.py run 01 [args]      run lab 01 and watch the symptoms
     python3 lab.py check 01           acceptance test for your fix
+    python3 lab.py guide 01           step-by-step walkthrough, one step at a time (lab 01)
+    python3 lab.py play 01            SQL playground: run queries, see their plans (lab 01)
     python3 lab.py hint 01            reveal the next hint (one at a time)
     python3 lab.py journal 01         create journal/01.md for your investigation notes
     python3 lab.py notes 01           what a senior engineer sees (after you pass)
@@ -84,7 +86,7 @@ def cmd_list(_args):
         mark = green("✔ passed") if lab_id in progress["passed"] else dim("·")
         print(f"  {bold(lab_id)}  {title:<22} {dim(concepts):<60}  {mark}")
     done = len(progress["passed"])
-    print(f"\n  {done}/{len(LABS)} passed.  Start: {bold('python3 lab.py run 01')}  and read labs/01-*/README.md")
+    print(f"\n  {done}/{len(LABS)} passed.  New here? Start with: {bold('python3 lab.py guide 01')}")
     print(dim("  Design drills: python3 lab.py drill    Estimation practice: python3 lab.py estimate"))
 
 
@@ -125,6 +127,41 @@ def cmd_hint(args):
     save_progress(progress)
     if upto < len(hints):
         print(dim(f"\nTry with this first. `python3 lab.py hint {lab[0]}` again for the next one."))
+
+
+def cmd_guide(args):
+    lab = find_lab(args[0])
+    path = lab_path(lab, "GUIDE.md")
+    if not os.path.exists(path):
+        print(f"Lab {lab[0]} has no guide on purpose: use the loop from Lab 01's guide, and `lab.py hint {lab[0]}`.")
+        return
+    with open(path) as f:
+        steps = [s.strip() for s in re.split(r"^(?=## Step \d+)", f.read(), flags=re.M)[1:]]
+    progress = load_progress()
+    guides = progress.setdefault("guide", {})
+    if len(args) > 1 and args[1].isdigit():
+        n = int(args[1])
+    elif len(args) > 1 and args[1] == "back":
+        n = max(1, guides.get(lab[0], 1) - 1)
+    elif len(args) > 1 and args[1] == "next":
+        n = guides.get(lab[0], 0) + 1
+    else:
+        n = guides.get(lab[0], 1)          # re-show where you are
+    n = min(max(n, 1), len(steps))
+    guides[lab[0]] = n
+    save_progress(progress)
+    print(f"\n{steps[n - 1]}\n")
+    print(dim(f"[step {n} of {len(steps)}]  "
+              + (f"next: python3 lab.py guide {lab[0]} next   " if n < len(steps) else "that's the last step.   ")
+              + f"previous: python3 lab.py guide {lab[0]} back   again: python3 lab.py guide {lab[0]}"))
+
+
+def cmd_play(args):
+    lab = find_lab(args[0])
+    if not os.path.exists(lab_path(lab, "playground.py")):
+        print(f"Lab {lab[0]} has no playground.")
+        return
+    run_script(lab, "playground.py")
 
 
 def cmd_journal(args):
@@ -220,9 +257,10 @@ def cmd_selftest(_args):
 
 
 COMMANDS = {"list": cmd_list, "run": cmd_run, "check": cmd_check, "hint": cmd_hint, "journal": cmd_journal,
+            "guide": cmd_guide, "play": cmd_play,
             "notes": cmd_notes, "reset": cmd_reset, "drill": cmd_drill, "review": cmd_review,
             "estimate": cmd_estimate, "selftest": cmd_selftest}
-NEEDS_LAB = {"run", "check", "hint", "journal", "notes", "reset", "review"}
+NEEDS_LAB = {"run", "check", "hint", "journal", "notes", "reset", "review", "guide", "play"}
 
 if __name__ == "__main__":
     if sys.version_info < (3, 9):

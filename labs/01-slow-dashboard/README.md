@@ -14,6 +14,10 @@ You own `app.py`, the queries behind those three pages. The database is SQLite w
 and 10k users. The harness acts like production: every statement pays a 0.5ms network round
 trip, and requests are killed after 2 seconds.
 
+> **First time doing this kind of thing?** Run `python3 lab.py guide 01`. It walks you through
+> the lab one step at a time, with practice in a SQL playground (`python3 lab.py play 01`)
+> before you touch the real code.
+
 ## Run it
 
 ```bash
