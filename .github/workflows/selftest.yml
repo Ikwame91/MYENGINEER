@@ -1,0 +1,15 @@
+name: Lab selftest
+on: [push, pull_request]
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.9", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      # Every lab's starter.py must fail its check and the reference solution must pass.
+      - run: python3 lab.py selftest

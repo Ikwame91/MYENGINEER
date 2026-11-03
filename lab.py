@@ -194,8 +194,10 @@ def cmd_reset(args):
     rel = os.path.join("labs", lab[1], "app.py")
     if not confirm(f"Overwrite {rel} with the original broken version? Your changes will be lost."):
         return
-    code = subprocess.call(["git", "checkout", "HEAD", "--", rel], cwd=ROOT)
-    print(green("Restored.") if code == 0 else red("git checkout failed; is this a git clone?"))
+    # Copy from the pristine starter.py rather than `git checkout HEAD`: once you commit your
+    # own fix, HEAD holds *your* solution, so a git-based reset would "restore" the fixed code.
+    shutil.copy(lab_path(lab, "starter.py"), lab_path(lab, "app.py"))
+    print(green("Restored."))
 
 
 def _drills():
@@ -229,19 +231,14 @@ def cmd_estimate(_args):
 
 
 def cmd_selftest(_args):
-    """For maintainers: the original broken app.py (from git) must fail, the reference solution must pass."""
+    """For maintainers: each lab's pristine starter.py must fail its check, the reference solution must pass."""
     failures = 0
     scratch = tempfile.mkdtemp(prefix="myengineer-selftest-")
     for lab in LABS:
         original = os.path.join(scratch, lab[0])
         os.makedirs(original)
-        shown = subprocess.run(["git", "show", f"HEAD:labs/{lab[1]}/app.py"], cwd=ROOT, capture_output=True)
-        if shown.returncode == 0:
-            with open(os.path.join(original, "app.py"), "wb") as f:
-                f.write(shown.stdout)
-        else:
-            print(yellow(f"  (no git history; testing your current labs/{lab[1]}/app.py as 'broken')"))
-            shutil.copy(lab_path(lab, "app.py"), original)
+        # starter.py, not app.py from git: learners commit their own fixes to app.py.
+        shutil.copy(lab_path(lab, "starter.py"), os.path.join(original, "app.py"))
         broken = subprocess.run([sys.executable, lab_path(lab, "check.py")], cwd=ROOT, capture_output=True,
                                 env=dict(os.environ, LAB_IMPL=original, NO_COLOR="1"))
         solved = subprocess.run([sys.executable, lab_path(lab, "check.py")], cwd=ROOT, capture_output=True,

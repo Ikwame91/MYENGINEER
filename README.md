@@ -97,6 +97,7 @@ labkit.py           shared helpers (no need to read)
 labs/NN-name/
   README.md         the incident and your investigation questions   ← start here
   app.py            the broken code you fix                         ← the only file you edit
+  starter.py        pristine copy of the broken app.py (what `lab.py reset` restores)
   run.py            reproduces the symptoms
   check.py          the acceptance test
   hints.md          progressive hints (use `lab.py hint`, not cat)
@@ -106,5 +107,6 @@ design/             drills, method, numbers, estimation quiz
 journal/            your investigation notes (commit them: it's your learning record)
 ```
 
-Maintainers: `python3 lab.py selftest` verifies every lab's original code fails its check and
-every reference solution passes.
+Maintainers: `python3 lab.py selftest` verifies every lab's `starter.py` fails its check and
+every reference solution passes (CI runs it on Python 3.9 and 3.13). If you change a lab's
+broken code, update both `app.py` and `starter.py`.
