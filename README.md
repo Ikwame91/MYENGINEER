@@ -108,5 +108,5 @@ journal/            your investigation notes (commit them: it's your learning re
 ```
 
 Maintainers: `python3 lab.py selftest` verifies every lab's `starter.py` fails its check and
-every reference solution passes (CI runs it on Python 3.9 and 3.13). If you change a lab's
+every reference solution passes (CI runs it on Python 3.11 and the latest 3.x). If you change a lab's
 broken code, update both `app.py` and `starter.py`.
