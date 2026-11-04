@@ -12,6 +12,7 @@ STOCK = 100          # units of the item on sale
 BUYERS = 1000        # people clicking "Buy" at 12:00:00
 SERVERS = 4          # app server processes behind the load balancer
 THREADS = 16         # request handler threads per server
+LATE_BUYERS = 200    # people who keep refreshing after the rush and buy units that come back
 ITEM_ID = 1
 
 
@@ -69,13 +70,21 @@ def _server(app, path, seed, server_id, next_user, gate, out):
 
     def handler():
         conn = connect(path)
+        probe = connect(path)  # the harness's own view of the shelf, not part of the app
         gate.wait()  # every handler on every server starts at exactly 12:00:00
         while True:
             with next_user.get_lock():
                 user_id = next_user.value
                 next_user.value += 1
-            if user_id > BUYERS:
+            if user_id > BUYERS + LATE_BUYERS:
                 break
+            if user_id > BUYERS:
+                # The rush is over. Like real shoppers refreshing the page, late buyers only
+                # matter while there is stock: a unit handed back by a declined card a moment
+                # after the line emptied must still be sellable, or a correct solution would
+                # randomly "leak" it (this happened on fast CI machines).
+                if probe.execute("SELECT stock FROM items WHERE id = ?", (ITEM_ID,)).fetchone()[0] <= 0:
+                    break
             try:
                 ok = app.buy(conn, payments, user_id, ITEM_ID)
                 with lock:
@@ -87,6 +96,7 @@ def _server(app, path, seed, server_id, next_user, gate, out):
                     conn.rollback()
                 except sqlite3.Error:
                     pass
+        probe.close()
         conn.close()
 
     threads = [threading.Thread(target=handler) for _ in range(THREADS)]
